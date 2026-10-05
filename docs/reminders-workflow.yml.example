@@ -1,0 +1,26 @@
+# Disabled example. Move to .github/workflows/reminders.yml only after configuring email and secrets.
+name: Daily practice reminders
+on:
+  schedule:
+    - cron: '47 3 * * *'
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: codetrack-reminders
+  cancel-in-progress: false
+jobs:
+  reminders:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Run reminder job
+        env:
+          CODETRACK_URL: ${{ vars.CODETRACK_URL }}
+          CRON_SECRET: ${{ secrets.CODETRACK_CRON_SECRET }}
+        run: |
+          test -n "$CODETRACK_URL" && test -n "$CRON_SECRET"
+          curl --fail-with-body --silent --show-error \
+            --retry 2 --retry-delay 15 --max-time 90 \
+            --request POST \
+            --header "Authorization: Bearer $CRON_SECRET" \
+            "${CODETRACK_URL%/}/api/jobs/reminders"
